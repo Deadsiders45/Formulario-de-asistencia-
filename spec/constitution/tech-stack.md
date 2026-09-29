@@ -29,9 +29,10 @@ Tabla `Registro`. Los campos del formulario, sus formatos y reglas están en `do
 
 ## Variables de entorno
 Documentar todas en `.env.example`, sin valores reales.
-- `DATABASE_URL` — conexión a Supabase.
-- `RESEND_API_KEY` — clave de Resend, solo en el servidor.
-- `MAIL_FROM` — remitente del correo.
+- `DATABASE_URL` — Supabase, Transaction pooler (puerto 6543, con `?pgbouncer=true`). Lo usa la app en funcionamiento.
+- `DIRECT_URL` — Supabase, Session pooler (puerto 5432). Lo usa Prisma para las migraciones. No usar la conexión directa `db.xxxx.supabase.co`: es IPv6 y puede fallar en redes IPv4.
+- `RESEND_API_KEY` — clave de Resend con permiso de solo envío, solo en el servidor.
+- `MAIL_FROM` — remitente del correo (pruebas: `onboarding@resend.dev`; producción: una dirección de un dominio verificado).
 - `DESTINATARIO_ASISTENCIA` — correo que recibe los registros (cambia de pruebas a real sin tocar el código).
 
 ## Servicios externos y límites
