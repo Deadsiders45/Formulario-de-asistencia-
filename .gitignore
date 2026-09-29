@@ -1,0 +1,29 @@
+# dependencias
+node_modules/
+
+# Next.js
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# variables de entorno: nunca subir, solo .env.example
+.env*
+!.env.example
+
+# tests
+coverage/
+test-results/
+playwright-report/
+playwright/.cache/
+
+# logs
+*.log
+
+# sistema y editor
+.DS_Store
+Thumbs.db
+.idea/
+
+# Vercel
+.vercel
