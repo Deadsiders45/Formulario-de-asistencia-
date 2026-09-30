@@ -58,3 +58,61 @@
 
 **Pendiente**
 - La comparación de `horaSalida` contra `horaIngreso` es tarea del bloque Servidor.
+
+## 2026-09-30 — Excepción conocida de `npm audit` y tokens de diseño
+
+**Vulnerabilidades aceptadas como excepción (ya anotada en AGENTS.md)**
+- Paquetes: `mysql2@3.15.3` y `deepmerge-ts@7.1.5`, ambos altos.
+- Por qué están en el árbol de producción: `prisma` está en `devDependencies`, pero `@prisma/client` (que sí es de producción) lo declara como `peerDependency` opcional (`"prisma": "*"`). npm lo arrastra al árbol de producción y sus dependencias vienen con él. Comprobado con un `npm ci --omit=dev` limpio: `prisma`, `mysql2`, `deepmerge-ts` y `@prisma/config` se instalan igual.
+- No se usan en ejecución: el datasource es `postgresql` con `@prisma/adapter-pg`. Búsqueda en todo `src/` (incluido el cliente generado) sin una sola coincidencia de `mysql2` o `deepmerge-ts`. Los avisos son de protocolo MySQL y de fusión de objetos.
+- No ejecutar `npm audit fix --force` ni bajar Prisma: el único arreglo que ofrece npm es `prisma@6.19.3`, que perdería `prisma.config.ts` y el generator `prisma-client`.
+- Revisar de nuevo antes de desplegar.
+
+**Tipografía**
+- `docs/diseno.md` no definía tipografía; se usaba la fuente del sistema. Ahora es Inter con `next/font/google` (variable `--font-inter`, subset `latin`, `display: swap`) y respaldo a la del sistema en `--font-sans`, según la sección Tipografía de `diseno.md`.
+
+**Tokens**
+- Se quitaron `--color-accent-hover` y `--color-border-strong`: no estaban en la tabla de `docs/diseno.md`, que es la fuente de verdad. Si hacen falta para estados hover o deshabilitado, primero se anotan en `diseno.md` y después se agregan al `@theme`.
+
+## 2026-09-30 — Feature 001, bloque Servidor
+
+**Hecho**
+- `src/lib/db.ts`: cliente Prisma con `@prisma/adapter-pg` sobre `DATABASE_URL` (Transaction pooler, 6543). El adaptador es obligatorio desde Prisma 7. Singleton con `globalThis` para no abrir pools en cada recarga de desarrollo.
+- `src/lib/hora.ts`: `fechaEnBogota` y `horaEnBogota` con `Intl.DateTimeFormat` (sin dependencias nuevas), `horaEsPosterior` y el mensaje de error.
+- `src/lib/registro.ts`: valida `horaSalida` contra `horaIngreso`, guarda con Prisma y traduce cualquier fallo a un mensaje genérico. El reloj es un parámetro con valor por defecto `new Date()`.
+- `src/app/actions.ts`: Server Action con validación Zod, honeypot y errores por campo. `redirect()` va fuera del try/catch, como exige Next.js.
+- 32 tests nuevos: `hora.test.ts` (14), `registro.test.ts` (10), `actions.test.ts` (8). Total 60. Ninguno escribe en la base real: Prisma va mockeado.
+
+**Decisiones**
+- `redirect()` lanza `NEXT_REDIRECT`; si estuviera dentro de un `try/catch` se tragaría la redirección. Por eso la mutación va dentro del `try` y el `redirect` después.
+- `FormData` solo transporta texto, así que `actions.ts` convierte `consentimiento` de `"true"` a booleano antes de validar. Sin eso, la casilla nunca podía pasar el `z.literal(true)`.
+- Logs del servidor: solo `error.code` (por ejemplo `P1001`), nunca el mensaje completo ni los valores de los campos. Hay un test que verifica que una cadena de conexión en el mensaje de error no llegue al usuario.
+- Comparación de `horaSalida` por texto: ambos valores son `HH:MM` de 24 h, así que el orden lexicográfico coincide con el orden horario.
+
+**Comportamiento conocido: turnos nocturnos**
+- La regla de `horaSalida` es estricta, así que un turno que termina después de medianoche no se puede expresar. Quien entre a las 23:50 y salga a las 00:30 recibe el error "La hora de salida debe ser posterior a la de ingreso. Si sales después de medianoche, déjala en blanco." y no se guarda el registro.
+- Es una limitación consciente, no un olvido: se decidió así para no inventar una fecha de salida que la persona no conoce. Resolverlo exigiría un segundo escaneo o una regla especial para turnos nocturnos, y ambos están fuera de alcance por ahora (`mission.md`).
+
+**Pendiente**
+- Comprobación manual de RLS: ver la entrada del 2026-09-30 más abajo.
+
+## 2026-09-30 — Comprobación de RLS, corrección del campo `fecha` y casing de la casilla
+
+**Bug encontrado y corregido: `fecha` como texto**
+- La primera ejecución del script de RLS falló. No era un problema de permisos: el `COUNT` sobre la tabla devolvió 0 sin error, así que RLS no bloquea a la app. El error exacto fue `PrismaClientValidationError: Invalid value for argument 'fecha': premature end of input. Expected ISO-8601 DateTime.`
+- Causa: la columna `fecha` es `@db.Date`, pero Prisma exige un `DateTime` ISO completo y yo pasaba el string `"2026-09-30"`. Los tests unitarios no lo detectaron porque Prisma va mockeado y nunca valida el tipo.
+- Corrección: `fechaComoDate()` en `hora.ts`, que devuelve un `Date` a medianoche UTC con la fecha de Bogotá. A medianoche UTC la parte de la fecha es la correcta y la hora se descarta al guardar en una columna DATE.
+- Tests nuevos: `fechaComoDate` devuelve un `Date` ISO y usa la fecha de Bogotá y no la de UTC; `registro.test.ts` comprueba que el valor enviado a Prisma es un `Date`, no un texto.
+
+**Resultado de la comprobación de RLS: correcta**
+- Se usó la función real `guardarRegistro()` con datos válidos del esquema y el cliente real de `db.ts` (que se conecta por `DATABASE_URL`, Transaction pooler, puerto 6543, la misma ruta que usará la app).
+- INSERT correcto. SELECT correcto. DELETE correcto, y se verificó por `id` que el registro ya no existía, no con `count()`.
+- `fecha` quedó como `2026-09-30T00:00:00.000Z` y `estadoCorreo` como `PENDIENTE`, confirmando que el default del modelo se aplica.
+- El script y su configuración de Vitest se borraron después. `git status` confirma que no quedó ningún archivo temporal.
+- Conclusión: RLS está activo en la tabla y la app puede escribir, leer y borrar. No se creó ninguna política.
+
+**Casilla de consentimiento**
+- `FormData` solo transporta texto, así que `actions.ts` convierte el valor a booleano antes de validar. Solo el texto exacto `"true"` se convierte a `true`, y solo para el campo `consentimiento`; cualquier otro nombre de campo pasa intacto.
+- Comportamiento actual con `"on"`, el valor por defecto de un checkbox HTML: **se rechaza**, igual que `""`, `"false"` y el campo ausente. Hay un test para cada caso.
+- Consecuencia práctica: el checkbox del formulario tendrá que enviar `value="true"`, no el `on` por defecto. Cómo se construye la casilla se define en el bloque Interfaz y se confirma con el test de Playwright del flujo completo.
+- `pg` instalado como dependencia directa (`^8.23.1`), autorizado. Los tres paquetes que Prisma 7 exige (`@prisma/adapter-pg`, `pg`, `dotenv`) quedaron anotados en `spec/constitution/tech-stack.md`, junto con la regla de preguntar antes de instalar cualquier paquete que no esté en ese documento.

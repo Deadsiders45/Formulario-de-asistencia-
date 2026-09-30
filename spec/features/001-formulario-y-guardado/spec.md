@@ -20,7 +20,7 @@ No incluye: envío de correo (feature 002) ni generación del QR (feature 003).
 3. Un teléfono se normaliza quitando espacios y guiones; si el resultado no tiene exactamente 10 dígitos, o si incluye el prefijo `+57`, muestra "Escribe los 10 dígitos de tu celular, sin el +57" y no guarda nada.
 4. Una cédula se normaliza quitando puntos y espacios; si el resultado tiene letras o no está entre 6 y 10 dígitos, muestra un error que dice cómo corregir.
 5. No se puede enviar sin marcar la casilla de autorización de datos.
-6. Si la hora de salida estimada se indica y no es posterior a la de ingreso, se muestra un error y no se guarda.
+6. Si la hora de salida estimada se indica y no es **estrictamente posterior** a la de ingreso, se muestra "La hora de salida debe ser posterior a la de ingreso. Si sales después de medianoche, déjala en blanco." y no se guarda.
 7. Al enviar con datos válidos se crea un `Registro` con `estadoCorreo = PENDIENTE` y se muestra la página de gracias con la hora del registro.
 8. Hacer doble clic en el botón no crea dos registros (el botón se deshabilita y muestra "Enviando…").
 9. Si el campo trampa (honeypot) viene lleno, no se guarda nada, pero la respuesta parece exitosa.

@@ -7,16 +7,14 @@
   --color-surface: #ffffff;
   --color-foreground: #202020;
   --color-muted: #686870;
-  --color-border: #cbd5e1;
+  --color-border: #64748b;
+  --color-divider: #cbd5e1;
   --color-brand: #80b840;
   --color-accent: #3f6b1a;
+  --color-accent-pressed: #2f5214;
   --color-accent-foreground: #ffffff;
   --color-danger: #b91c1c;
   --color-success: #15803d;
-
-  /* Derivados, para no inventar tonos nuevos: hover y estados. */
-  --color-accent-hover: color-mix(in srgb, var(--color-accent) 85%, black);
-  --color-border-strong: color-mix(in srgb, var(--color-border) 70%, black);
 
   /* Una sola tipografía: Inter, con la del sistema como respaldo. */
   --font-sans:

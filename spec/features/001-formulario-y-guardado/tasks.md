@@ -14,10 +14,10 @@
 - [x] Tests unitarios del esquema (teléfono, cédula, hora de salida, visitaA).
 
 ## Servidor
-- [ ] `db.ts` y `registro.ts`.
-- [ ] Server Action con validación, honeypot y manejo de errores.
-- [ ] Generar fecha y hora de ingreso en America/Bogota, con test.
-- [ ] Validar horaSalida posterior a horaIngreso (America/Bogota) con test de horas cercanas a medianoche.
+- [x] `db.ts` y `registro.ts`.
+- [x] Server Action con validación, honeypot y manejo de errores.
+- [x] Generar fecha y hora de ingreso en America/Bogota, con test.
+- [x] Validar horaSalida posterior a horaIngreso (America/Bogota) con test de horas cercanas a medianoche.
 
 ## Interfaz
 - [ ] Componentes base: campo, botón, casilla.

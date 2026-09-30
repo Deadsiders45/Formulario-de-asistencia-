@@ -9,9 +9,11 @@ Identidad de TranSuperior S.A.S. Los tokens viven en el bloque `@theme` de `src/
 | Fondo de tarjeta/formulario | `surface` | `#FFFFFF` | |
 | Texto principal | `foreground` | `#202020` | Negro del logo. |
 | Texto secundario | `muted` | `#686870` | Gris del logo; contraste ≈ 5.5:1 sobre blanco. |
-| Borde de campos | `border` | `#CBD5E1` | |
+| Borde de campos | `border` | `#64748B` | |
+| Separadores suaves | `divider` | `#CBD5E1` | Líneas que separan, no bordes de campo. |
 | Verde de marca | `brand` | `#80B840` | Solo detalles (foco, líneas, iconos). No como fondo de texto blanco (contraste ≈ 2.4:1). |
 | Botón principal | `accent` | `#3F6B1A` | Verde oscuro derivado de la marca; contraste ≈ 6.3:1 con blanco. |
+| Botón presionado | `accent-pressed` | `#2F5214` | Estado presionado del botón principal. |
 | Texto sobre botón | `accent-foreground` | `#FFFFFF` | |
 | Error | `danger` | `#B91C1C` | |
 | Éxito | `success` | `#15803D` | |
@@ -31,9 +33,13 @@ Identidad de TranSuperior S.A.S. Los tokens viven en el bloque `@theme` de `src/
 - Ubicación: arriba del formulario, alto de 56 px, centrado.
 - Si el archivo no carga, mostrar el nombre de la empresa como texto.
 
+## Foco y errores
+- El foco de los campos usa un anillo de 2 px en `brand`. Nunca quitarlo: sin anillo visible no hay navegación por teclado.
+- Los errores nunca se señalan solo con color. Llevan icono o una palabra junto al mensaje, para que se entiendan sin distinguir el color.
+
 ## Componentes
-- **Campo de texto:** etiqueta visible encima, altura mínima 44 px, borde `border`, foco con anillo `brand`.
-- **Mensaje de error:** debajo del campo, color `danger`, dice cómo corregir ("Escribe los 10 dígitos de tu celular").
+- **Campo de texto:** etiqueta visible encima, altura mínima 44 px, borde `border`, foco con anillo de 2 px en `brand`.
+- **Mensaje de error:** debajo del campo, color `danger`, con icono o palabra además del color, dice cómo corregir ("Escribe los 10 dígitos de tu celular").
 - **Botón principal:** ancho completo en celular, altura mínima 44 px, fondo `accent`, texto `accent-foreground`. En carga: "Enviando…" y deshabilitado.
 - **Casilla de autorización:** área táctil de 44 px, texto claro junto a la casilla.
 - **Página de gracias:** marca de éxito en `success`, mensaje "Tu asistencia fue registrada" y la hora del registro.

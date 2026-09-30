@@ -51,6 +51,7 @@ Flujo de un envío: `Formulario (cliente)` → `Server Action` → `src/lib/regi
 - Errores controlados en el servidor; nunca mostrar detalles técnicos al usuario.
 - Interfaz en español, fechas en zona America/Bogota.
 - Dos tipos de registro: `trabajador` y `visitante`, con campos distintos. El QR puede indicar el tipo (`?tipo=visitante`).
+- Los mocks de Prisma no validan tipos en ejecución. Todo cambio en el modelo o en los valores que se envían a Prisma se prueba al menos una vez contra la base real (prueba temporal que limpia lo que crea) o con el test e2e.
 
 ## No hagas
 - No instalar dependencias sin avisar.
