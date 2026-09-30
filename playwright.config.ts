@@ -1,8 +1,12 @@
+// Los tests escriben en la base real, así que necesitan las variables de entorno.
+import "dotenv/config";
 import { defineConfig, devices } from "@playwright/test";
 
 // El formulario se usa desde el celular escaneando el QR,
 // así que las pruebas corren en viewport de móvil.
 const MOBILE_VIEWPORT = { width: 390, height: 844 };
+
+const esProduccion = process.env.VERCEL_ENV === "production" || process.env.NODE_ENV === "production";
 
 export default defineConfig({
   testDir: "./e2e",
@@ -10,6 +14,9 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   reporter: "list",
+  // Los tests escriben en la base real (crean y borran registros de prueba).
+  // Nunca deben correr contra producción.
+  globalSetup: esProduccion ? "./e2e/bloquear-produccion.ts" : undefined,
   use: {
     baseURL: "http://localhost:3000",
     trace: "on-first-retry",

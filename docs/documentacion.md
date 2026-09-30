@@ -116,3 +116,33 @@
 - Comportamiento actual con `"on"`, el valor por defecto de un checkbox HTML: **se rechaza**, igual que `""`, `"false"` y el campo ausente. Hay un test para cada caso.
 - Consecuencia práctica: el checkbox del formulario tendrá que enviar `value="true"`, no el `on` por defecto. Cómo se construye la casilla se define en el bloque Interfaz y se confirma con el test de Playwright del flujo completo.
 - `pg` instalado como dependencia directa (`^8.23.1`), autorizado. Los tres paquetes que Prisma 7 exige (`@prisma/adapter-pg`, `pg`, `dotenv`) quedaron anotados en `spec/constitution/tech-stack.md`, junto con la regla de preguntar antes de instalar cualquier paquete que no esté en ese documento.
+
+## 2026-09-30 — Feature 001, bloque Interfaz
+
+**Hecho**
+- `src/components/`: `Campo`, `BotonPrincipal`, `CasillaConsentimiento`, `IconoAlerta`, `Logo` y `FormularioAsistencia`. Tokens de `docs/diseno.md`: borde `divider`/`border`, anillo de foco de 2 px en `brand`, botón `accent` con `accent-pressed`, error `danger` con icono y la palabra "Error:".
+- `src/app/page.tsx`: Server Component que hace `await searchParams` (Next 16) y normaliza el tipo a minúsculas.
+- `src/app/gracias/page.tsx`: valida el parámetro `hora` con Zod contra `^([01]\d|2[0-3]):[0-5]\d$` antes de pintarlo; si no cumple, omite la hora.
+- `src/app/error.tsx`: mensaje amable si la Server Action falla antes de responder.
+- 6 tests de Playwright en `e2e/registro.spec.ts` en viewport 390x844. Todos pasan.
+- `@hookform/resolvers@5.9.1`: su peer dependency declara `zod: ^3.25.0 || ^4.0.0`, compatible con la v4.6.5 del proyecto. Anotado en `tech-stack.md`.
+
+**Bugs encontrados y corregidos**
+- **La casilla nunca llegaba como booleano.** `register("consentimiento", { setValueAs })` devolvía el texto `"true"`, no `true`, y el esquema lo rechazaba. Se resolvió con `Controller`, que entrega el booleano real. El `value="true"` del input sigue siendo necesario para la Server Action.
+- **El `try/catch` del cliente se tragaba la redirección.** `redirect()` lanza `NEXT_REDIRECT`; el catch lo convertía en un mensaje de error y la página nunca cambiaba. Se quitó el `try/catch` y se añadió `src/app/error.tsx` para cubrir la caída de red sin interferir con el redirect.
+- **`tipo` no llegaba cuando venía del QR.** Sin el selector renderizado, `register("tipo")` no se llamaba y el valor por defecto no viajaba; el discriminador de Zod fallaba con "Invalid discriminator value". Se añadió un `<input type="hidden">` con `register("tipo")`.
+- **`horaSalida` rompía el guardado.** El cliente omite los `undefined`, así que la clave no llegaba a la Server Action, y `z.string()` la rechazaba como ausente. Ahora el esquema acepta tres formas: ausente, texto vacío o `HH:MM`.
+- **`formState.errors` guarda objetos, no textos.** `{type, message, ref}` se renderizaba como hijo de React y rompía la página con "Objects are not valid as a React child". Ahora se aplanan a string antes de pasarlos a los componentes.
+- **Campo trampa renombrado** de `web` a `campoTrampa`, que ningún navegador autocompleta.
+
+**Base de datos en los tests e2e**
+- Los tests crean registros reales con `nombre` con prefijo `E2E-<timestamp>` y `documento` reservado `9999999999`. La limpieza borra solo registros que cumplan **las dos** condiciones, así que nunca toca un registro de una persona.
+- La limpieza corre en `beforeAll` (por si quedó algo de una corrida anterior) y en `afterAll`.
+- **El e2e no debe correr contra producción.** `playwright.config.ts` detecta `VERCEL_ENV=production` o `NODE_ENV=production` y carga un `globalSetup` que lanza un error antes de ejecutar cualquier test.
+- **Pendiente para la feature 002:** los tests e2e necesitarán un modo de pruebas que no envíe correos reales, o un `DESTINATARIO_ASISTENCIA` de pruebas. Sin eso, al añadir el correo los tests dispararían correos de verdad a la encargada.
+
+**Cambio de empaquetado**
+- `package.json` ahora tiene `"type": "module"`. El cliente generado de Prisma usa `import.meta` y Playwright lo cargaba como CommonJS, lo que rompía los tests. `playwright.config.ts` carga `dotenv/config` para que el test que consulta la base tenga las variables de entorno.
+
+**Pendiente**
+- Revisión de accesibilidad con Axe: se pidió para el bloque Cierre, no se instaló `@axe-core/playwright` todavía.

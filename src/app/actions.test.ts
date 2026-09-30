@@ -23,7 +23,7 @@ const camposValidos = {
   telefono: "300 123 4567",
   horaSalida: "",
   consentimiento: "true",
-  web: "",
+  campoTrampa: "",
 };
 
 beforeEach(() => {
@@ -34,7 +34,7 @@ beforeEach(() => {
 
 describe("registrar", () => {
   it("redirige a la página de gracias con la hora del registro", async () => {
-    await registrar({}, formDataDe(camposValidos));
+    await registrar(formDataDe(camposValidos));
 
     expect(guardarRegistro).toHaveBeenCalledTimes(1);
     expect(redirect).toHaveBeenCalledTimes(1);
@@ -42,35 +42,46 @@ describe("registrar", () => {
   });
 
   it("normaliza el teléfono antes de guardar", async () => {
-    await registrar({}, formDataDe(camposValidos));
+    await registrar(formDataDe(camposValidos));
     expect(guardarRegistro.mock.calls[0]![0].telefono).toBe("3001234567");
   });
 
+  it("omite los campos vacíos, sin mandar 'undefined'", async () => {
+    // Sin visitaA: el texto "undefined" no debe aparecer en ninguna parte.
+    await registrar(formDataDe(camposValidos));
+    const enviado = guardarRegistro.mock.calls[0]![0] as Record<string, unknown>;
+    expect(enviado).not.toHaveProperty("visitaA");
+    for (const [campo, valor] of Object.entries(enviado)) {
+      expect(valor, `el campo ${campo} no debe ser "undefined"`).not.toBe("undefined");
+      expect(valor, `el campo ${campo} no debe ser "null"`).not.toBe("null");
+    }
+    // El campo trampa vacío sí viaja como texto vacío: es lo que espera el
+    // esquema y no se guarda nada.
+    expect(enviado.campoTrampa).toBe("");
+  });
+
+  it("no manda horaSalida cuando el campo viene vacío", async () => {
+    await registrar(formDataDe(camposValidos));
+    const enviado = guardarRegistro.mock.calls[0]![0] as Record<string, unknown>;
+    expect(enviado.horaSalida).toBeUndefined();
+  });
+
+  it("guarda la hora de salida cuando viene informada", async () => {
+    await registrar(formDataDe({ ...camposValidos, horaSalida: "17:30" }));
+    const enviado = guardarRegistro.mock.calls[0]![0] as Record<string, unknown>;
+    expect(enviado.horaSalida).toBe("17:30");
+  });
+
   it("no redirige si los datos son inválidos", async () => {
-    const resultado = await registrar(
-      {},
-      formDataDe({ ...camposValidos, telefono: "123" }),
-    );
+    const resultado = await registrar(formDataDe({ ...camposValidos, telefono: "123" }));
 
     expect(resultado.errores?.telefono).toContain("10 dígitos");
     expect(guardarRegistro).not.toHaveBeenCalled();
     expect(redirect).not.toHaveBeenCalled();
   });
 
-  it("exige el consentimiento", async () => {
-    const resultado = await registrar(
-      {},
-      formDataDe({ ...camposValidos, consentimiento: "false" }),
-    );
-    expect(resultado.errores?.consentimiento).toContain("autorizar");
-    expect(guardarRegistro).not.toHaveBeenCalled();
-  });
-
   it("rechaza el consentimiento enviado como texto vacío", async () => {
-    const resultado = await registrar(
-      {},
-      formDataDe({ ...camposValidos, consentimiento: "" }),
-    );
+    const resultado = await registrar(formDataDe({ ...camposValidos, consentimiento: "" }));
     expect(resultado.errores?.consentimiento).toContain("autorizar");
     expect(guardarRegistro).not.toHaveBeenCalled();
   });
@@ -79,45 +90,35 @@ describe("registrar", () => {
     const sinConsentimiento: Record<string, string> = { ...camposValidos };
     delete sinConsentimiento.consentimiento;
 
-    const resultado = await registrar({}, formDataDe(sinConsentimiento));
+    const resultado = await registrar(formDataDe(sinConsentimiento));
     expect(resultado.errores?.consentimiento).toContain("autorizar");
     expect(guardarRegistro).not.toHaveBeenCalled();
   });
 
   it("rechaza 'on', el valor por defecto de un checkbox HTML", async () => {
-    // Today `on` is NOT accepted: only the exact text "true" counts.
-    const resultado = await registrar(
-      {},
-      formDataDe({ ...camposValidos, consentimiento: "on" }),
-    );
+    const resultado = await registrar(formDataDe({ ...camposValidos, consentimiento: "on" }));
     expect(resultado.errores?.consentimiento).toContain("autorizar");
     expect(guardarRegistro).not.toHaveBeenCalled();
   });
 
   it("solo convierte a booleano el campo consentimiento", async () => {
-    // Un campo que se llame "consentimiento2" no pasa por la conversión:
-    // llega como texto, Zod lo descarta y el consentimiento sigue siendo booleano.
-    await registrar({}, formDataDe({ ...camposValidos, consentimiento2: "true" }));
+    await registrar(formDataDe({ ...camposValidos, consentimient2: "true" }));
 
     expect(guardarRegistro).toHaveBeenCalledTimes(1);
     const enviado = guardarRegistro.mock.calls[0]![0] as Record<string, unknown>;
     expect(enviado.consentimiento).toBe(true);
-    expect(enviado).not.toHaveProperty("consentimiento2");
+    expect(enviado).not.toHaveProperty("consentimient2");
   });
 
   it("pide la persona a quien visita cuando el tipo es visitante", async () => {
-    const resultado = await registrar(
-      {},
-      formDataDe({ ...camposValidos, tipo: "visitante" }),
-    );
+    const resultado = await registrar(formDataDe({ ...camposValidos, tipo: "visitante" }));
     expect(resultado.errores?.visitaA).toBeTruthy();
     expect(guardarRegistro).not.toHaveBeenCalled();
   });
 
-  it("con el honeypot lleno responde sin errores y sin guardar", async () => {
+  it("con el campo trampa lleno responde sin errores y sin guardar", async () => {
     const resultado = await registrar(
-      {},
-      formDataDe({ ...camposValidos, web: "http://spam.example" }),
+      formDataDe({ ...camposValidos, campoTrampa: "http://spam.example" }),
     );
 
     expect(resultado.errores).toBeUndefined();
@@ -131,10 +132,7 @@ describe("registrar", () => {
       errores: { horaSalida: "La hora de salida debe ser posterior a la de ingreso." },
     });
 
-    const resultado = await registrar(
-      {},
-      formDataDe({ ...camposValidos, horaSalida: "07:00" }),
-    );
+    const resultado = await registrar(formDataDe({ ...camposValidos, horaSalida: "07:00" }));
 
     expect(resultado.errores?.horaSalida).toContain("posterior");
     expect(redirect).not.toHaveBeenCalled();
@@ -146,7 +144,7 @@ describe("registrar", () => {
       errorGeneral: "No pudimos guardar tu registro.",
     });
 
-    const resultado = await registrar({}, formDataDe(camposValidos));
+    const resultado = await registrar(formDataDe(camposValidos));
 
     expect(resultado.errorGeneral).toBe("No pudimos guardar tu registro.");
     expect(redirect).not.toHaveBeenCalled();

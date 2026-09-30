@@ -12,16 +12,17 @@ export type EstadoFormulario = {
 function aObjeto(formData: FormData): Record<string, unknown> {
   const datos: Record<string, unknown> = {};
   for (const [clave, valor] of formData.entries()) {
-    datos[clave] = typeof valor === "string" ? valor : "";
+    if (typeof valor === "string") datos[clave] = valor;
   }
+  // Un campo que la persona no llenó viaja como ""; el esquema lo trata como
+  // ausente. Los valores `undefined` o `null` nunca llegan: el cliente los
+  // omite al construir el FormData.
+  //
   // FormData solo transporta texto: la casilla de autorización llega como
-  // "true" o como campo ausente. El esquema espera un booleano.
-  // Solo el texto exacto "true" marca el consentimiento; "on" (el valor por
-  // defecto de un checkbox HTML) no cuenta. Cómo viaja la casilla desde el
-  // formulario se define en el bloque Interfaz.
-  if ("consentimiento" in datos) {
-    datos.consentimiento = datos.consentimiento === "true";
-  }
+  // "true" o como campo ausente. El esquema espera un booleano, así que se
+  // normaliza siempre. Solo el texto exacto "true" marca el consentimiento;
+  // "on" (el valor por defecto de un checkbox HTML) no cuenta.
+  datos.consentimiento = datos.consentimiento === "true";
   return datos;
 }
 
@@ -39,19 +40,15 @@ function erroresPorCampo(
   return errores;
 }
 
-export async function registrar(
-  _estado: EstadoFormulario,
-  formData: FormData,
-): Promise<EstadoFormulario> {
-  const datos = aObjeto(formData);
-  const resultado = registroSchema.safeParse(datos);
+export async function registrar(formData: FormData): Promise<EstadoFormulario> {
+  const resultado = registroSchema.safeParse(aObjeto(formData));
 
   if (!resultado.success) {
     return { errores: erroresPorCampo(resultado.error.issues) };
   }
 
   // Campo trampa: se responde como si fuera exitoso, pero no se guarda nada.
-  if (resultado.data.web !== undefined && resultado.data.web !== "") {
+  if (resultado.data.campoTrampa) {
     return {};
   }
 
@@ -63,6 +60,6 @@ export async function registrar(
       : { errorGeneral: guardado.errorGeneral };
   }
 
-  // `redirect` lanza NEXT_REDIRECT: va fuera del try/catch de arriba.
+  // `redirect` lanza NEXT_REDIRECT: por eso no está dentro de ningún try/catch.
   redirect(`/gracias?hora=${encodeURIComponent(guardado.hora)}`);
 }

@@ -23,7 +23,7 @@ function datosValidos(extra: Record<string, unknown> = {}) {
     telefono: "3001234567",
     horaSalida: "",
     consentimiento: true,
-    web: "",
+    campoTrampa: "",
     ...extra,
   });
 }

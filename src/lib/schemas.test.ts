@@ -9,7 +9,7 @@ const trabajadorValido = {
   telefono: "3001234567",
   horaSalida: "",
   consentimiento: true,
-  web: "",
+  campoTrampa: "",
 } satisfies RegistroInput;
 
 describe("esquema del formulario", () => {
@@ -102,6 +102,16 @@ describe("consentimiento", () => {
       consentimiento: false,
     });
     expect(resultado.error?.issues[0].message).toContain("autorizar");
+  });
+
+  it("rechaza 'on' y 'true' si llegan como texto sin normalizar", () => {
+    // La Server Action convierte "true" a booleano antes de validar; si el
+    // texto llegara al esquema, es un tipo inválido.
+    for (const consentimiento of ["on", "true"]) {
+      expect(
+        registroSchema.safeParse({ ...trabajadorValido, consentimiento }).success,
+      ).toBe(false);
+    }
   });
 });
 
@@ -252,7 +262,7 @@ describe("horaSalida", () => {
   });
 });
 
-describe("honeypot", () => {
+describe("campo trampa", () => {
   it("acepta el campo trampa vacío", () => {
     expect(registroSchema.safeParse(trabajadorValido).success).toBe(true);
   });
@@ -260,11 +270,32 @@ describe("honeypot", () => {
   it("deja pasar el campo trampa lleno para que el servidor lo descarte", () => {
     const resultado = registroSchema.safeParse({
       ...trabajadorValido,
-      web: "http://spam.example",
+      campoTrampa: "http://spam.example",
     });
     expect(resultado.success).toBe(true);
     if (resultado.success) {
-      expect(resultado.data.web).toBe("http://spam.example");
+      expect(resultado.data.campoTrampa).toBe("http://spam.example");
     }
+  });
+
+  it("acepta horaSalida ausente, no solo texto vacío", () => {
+    // El cliente omite los `undefined` al construir el FormData, así que la
+    // clave puede no llegar a la Server Action.
+    const { horaSalida, ...sinHoraSalida } = trabajadorValido;
+    void horaSalida;
+    const resultado = registroSchema.safeParse(sinHoraSalida);
+    expect(resultado.success).toBe(true);
+    if (resultado.success) {
+      expect(resultado.data.horaSalida).toBeUndefined();
+    }
+  });
+
+  it("acepta el nombre que usan los tests end-to-end", () => {
+    // El prefijo E2E- debe pasar la validación de nombre.
+    const resultado = registroSchema.safeParse({
+      ...trabajadorValido,
+      nombre: "E2E-1759243200000 Ana María López",
+    });
+    expect(resultado.success).toBe(true);
   });
 });

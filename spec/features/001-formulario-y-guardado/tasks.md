@@ -20,10 +20,10 @@
 - [x] Validar horaSalida posterior a horaIngreso (America/Bogota) con test de horas cercanas a medianoche.
 
 ## Interfaz
-- [ ] Componentes base: campo, botón, casilla.
-- [ ] Página del formulario con lectura de `?tipo=`.
-- [ ] Estados de carga, error por campo y error general.
-- [ ] Página de gracias con la hora del registro.
+- [x] Componentes base: campo, botón, casilla.
+- [x] Página del formulario con lectura de `?tipo=`.
+- [x] Estados de carga, error por campo y error general.
+- [x] Página de gracias con la hora del registro.
 
 ## Cierre
 - [ ] Test Playwright del flujo (visitante y trabajador) en viewport de celular.

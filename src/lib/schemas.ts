@@ -33,11 +33,17 @@ const documentoSchema = z
       "Escribe solo los números de tu cédula, entre 6 y 10 dígitos, sin puntos",
   });
 
-/** Hora estimada de salida, texto `HH:MM` en formato 24 h. Opcional. */
+/**
+ * Hora estimada de salida, texto `HH:MM` en formato 24 h. Opcional.
+ *
+ * Acepta tres formas: ausente (el cliente omite los `undefined`), texto vacío
+ * (el input de hora del navegador manda "" cuando no se elige nada) o un
+ * `HH:MM` válido.
+ */
 const horaSalidaSchema = z
   .string()
-  // El input de hora del navegador envía "" cuando no se elige nada.
-  .transform((valor) => (valor.trim() === "" ? undefined : valor))
+  .optional()
+  .transform((valor) => (valor === undefined || valor.trim() === "" ? undefined : valor))
   .refine(
     (valor) => valor === undefined || /^([01]\d|2[0-3]):[0-5]\d$/.test(valor),
     { message: "Escribe la hora como HH:MM, por ejemplo 17:30" },
@@ -63,9 +69,12 @@ const visitaASchema = z
     message: "El nombre no puede pasar de 100 caracteres",
   });
 
-const consentimientoSchema = z.literal(true, {
-  message: "Debes autorizar el tratamiento de tus datos personales",
-});
+const MENSAJE_CONSENTIMIENTO =
+  "Debes autorizar el tratamiento de tus datos personales";
+
+const consentimientoSchema = z
+  .boolean()
+  .refine((valor) => valor === true, { message: MENSAJE_CONSENTIMIENTO });
 
 const camposComunes = {
   nombre: nombreSchema,
@@ -73,8 +82,11 @@ const camposComunes = {
   telefono: telefonoSchema,
   horaSalida: horaSalidaSchema,
   consentimiento: consentimientoSchema,
-  /** Campo trampa anti-spam. Si viene lleno, el servidor descarta el envío. */
-  web: z.string().optional(),
+  /**
+   * Campo trampa anti-spam. Si viene lleno, el servidor descarta el envío.
+   * El nombre no corresponde a nada que un navegadorComplete solo.
+   */
+  campoTrampa: z.string().optional(),
 };
 
 export const registroSchema = z.discriminatedUnion("tipo", [
@@ -91,3 +103,35 @@ export const registroSchema = z.discriminatedUnion("tipo", [
 
 export type RegistroInput = z.input<typeof registroSchema>;
 export type RegistroDatos = z.output<typeof registroSchema>;
+
+/**
+ * Nombres de todos los campos del formulario, incluyendo `visitaA`, que solo
+ * existe en la rama de visitante. `keyof RegistroInput` sobre la unión
+ * discriminada da la intersección de claves y dejaría fuera `visitaA`.
+ */
+export const CAMPOS_FORMULARIO = [
+  "tipo",
+  "nombre",
+  "documento",
+  "telefono",
+  "horaSalida",
+  "visitaA",
+  "consentimiento",
+  "campoTrampa",
+] as const;
+
+export type CampoFormulario = (typeof CAMPOS_FORMULARIO)[number];
+
+/** Errores indexados por nombre de campo, sin estrechar la unión. */
+export type ErroresRegistro = Partial<Record<CampoFormulario, string>>;
+
+/** Normaliza un `Record<string, string>` a errores por campo del formulario. */
+export function soloErroresDeCampos(
+  errores: Record<string, string>,
+): ErroresRegistro {
+  const resultado: ErroresRegistro = {};
+  for (const [campo, mensaje] of Object.entries(errores)) {
+    resultado[campo as CampoFormulario] = mensaje;
+  }
+  return resultado;
+}

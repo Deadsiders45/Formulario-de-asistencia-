@@ -35,6 +35,10 @@ Documentar todas en `.env.example`, sin valores reales.
 - `MAIL_FROM` — remitente del correo (pruebas: `onboarding@resend.dev`; producción: una dirección de un dominio verificado).
 - `DESTINATARIO_ASISTENCIA` — correo que recibe los registros (cambia de pruebas a real sin tocar el código).
 
+## Requeridas por las herramientas
+Paquetes que instala el framework o las librerías y que el proyecto no elige libremente.
+- `@hookform/resolvers` (5.9.1) — conecta react-hook-form con Zod. Su `peerDependencies` admite `zod: ^3.25.0 || ^4.0.0`, compatible con la v4 que usa el proyecto.
+
 ## Requeridas por Prisma 7
 Prisma 7 ya no incluye los motores de Rust ni carga `.env` solo, así que necesita estos paquetes además de `prisma` y `@prisma/client`.
 - `@prisma/adapter-pg` — adaptador de driver para PostgreSQL. Sin él, el cliente no se puede construir.
