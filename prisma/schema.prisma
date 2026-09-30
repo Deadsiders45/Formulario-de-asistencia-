@@ -1,0 +1,40 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum TipoRegistro {
+  TRABAJADOR
+  VISITANTE
+}
+
+enum EstadoCorreo {
+  PENDIENTE
+  ENVIADO
+  FALLIDO
+}
+
+model Registro {
+  id            String       @id @default(uuid()) @db.Uuid
+  tipo          TipoRegistro
+  fecha         DateTime     @db.Date
+  horaIngreso   DateTime     @db.Timestamptz(3)
+  /// Estimación escrita por la persona al llegar, en texto HH:MM.
+  /// Opcional: se valida en el servidor contra `horaIngreso`.
+  horaSalida    String?      @db.VarChar(5)
+  nombre        String       @db.VarChar(100)
+  /// Cédula de ciudadanía, solo dígitos (6 a 10).
+  documento     String       @db.VarChar(10)
+  /// Celular colombiano, solo dígitos (10).
+  telefono      String       @db.VarChar(10)
+  /// Obligatorio solo si `tipo` es VISITANTE.
+  visitaA       String?      @db.VarChar(100)
+  /// Siempre true: si no está marcado, no se guarda.
+  consentimiento Boolean
+  estadoCorreo  EstadoCorreo @default(PENDIENTE)
+  creadoEn      DateTime     @default(now()) @db.Timestamptz(3)
+}

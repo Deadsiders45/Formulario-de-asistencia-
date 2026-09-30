@@ -1,22 +1,23 @@
 # Tareas — 001 Formulario y guardado
 
 ## Preparación
-- [ ] Crear el proyecto Next.js con TypeScript estricto y Tailwind.
-- [ ] Configurar Prisma y conectar Supabase (`DATABASE_URL` en `.env`).
-- [ ] Crear `.env.example` con todas las variables de `tech-stack.md`.
-- [ ] Instalar y configurar Vitest y Playwright; agregar los scripts `test` y `test:e2e`.
-- [ ] Definir los tokens de color y tipografía de `docs/diseno.md`.
-- [ ] Copiar el logo a `public/logo.png`.
+- [x] Crear el proyecto Next.js con TypeScript estricto y Tailwind.
+- [x] Configurar Prisma y conectar Supabase (`DATABASE_URL` en `.env`).
+- [x] Crear `.env.example` con todas las variables de `tech-stack.md`.
+- [x] Instalar y configurar Vitest y Playwright; agregar los scripts `test` y `test:e2e`.
+- [x] Definir los tokens de color y tipografía de `docs/diseno.md`.
+- [x] Copiar el logo a `public/logo.png`.
 
 ## Datos y validación
-- [ ] Modelo `Registro` en Prisma y primera migración.
-- [ ] Esquema Zod con `tipo` como discriminador.
-- [ ] Tests unitarios del esquema (teléfono, cédula, hora de salida, visitaA).
+- [x] Modelo `Registro` en Prisma y primera migración.
+- [x] Esquema Zod con `tipo` como discriminador.
+- [x] Tests unitarios del esquema (teléfono, cédula, hora de salida, visitaA).
 
 ## Servidor
 - [ ] `db.ts` y `registro.ts`.
 - [ ] Server Action con validación, honeypot y manejo de errores.
 - [ ] Generar fecha y hora de ingreso en America/Bogota, con test.
+- [ ] Validar horaSalida posterior a horaIngreso (America/Bogota) con test de horas cercanas a medianoche.
 
 ## Interfaz
 - [ ] Componentes base: campo, botón, casilla.

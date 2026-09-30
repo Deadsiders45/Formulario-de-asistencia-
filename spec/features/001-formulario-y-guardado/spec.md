@@ -17,8 +17,8 @@ No incluye: envío de correo (feature 002) ni generación del QR (feature 003).
 ## Criterios de aceptación
 1. Con `?tipo=visitante` se muestra el campo "Persona a quien visita" y el tipo queda fijo. Con `?tipo=trabajador` se muestra sin ese campo. Sin parámetro (o con uno inválido), la persona elige el tipo.
 2. No se muestran campos de fecha ni hora de ingreso; el servidor los genera en zona America/Bogota.
-3. Un teléfono que no tenga exactamente 10 dígitos muestra "Escribe 10 dígitos" y no guarda nada.
-4. Una cédula con letras o fuera de 6 a 10 dígitos muestra un error que dice cómo corregir.
+3. Un teléfono se normaliza quitando espacios y guiones; si el resultado no tiene exactamente 10 dígitos, o si incluye el prefijo `+57`, muestra "Escribe los 10 dígitos de tu celular, sin el +57" y no guarda nada.
+4. Una cédula se normaliza quitando puntos y espacios; si el resultado tiene letras o no está entre 6 y 10 dígitos, muestra un error que dice cómo corregir.
 5. No se puede enviar sin marcar la casilla de autorización de datos.
 6. Si la hora de salida estimada se indica y no es posterior a la de ingreso, se muestra un error y no se guarda.
 7. Al enviar con datos válidos se crea un `Registro` con `estadoCorreo = PENDIENTE` y se muestra la página de gracias con la hora del registro.

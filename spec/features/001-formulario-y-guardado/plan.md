@@ -8,7 +8,7 @@ Un formulario de cliente (react-hook-form + Zod) que llama a una Server Action. 
 - **Fecha y hora** generadas en el servidor con zona America/Bogota; el cliente nunca las envía.
 - **Anti-spam:** honeypot en esta feature. El límite de intentos por IP se decide en el plan de la feature 003, junto con el despliegue.
 - **Errores:** la Server Action devuelve errores por campo o un mensaje genérico; nunca detalles técnicos.
-- **Estilos:** tokens de `docs/diseno.md` definidos una vez en `globals.css` / `tailwind.config`.
+- **Estilos:** tokens de `docs/diseno.md` definidos una vez en el bloque `@theme` de `src/app/globals.css` (Tailwind v4; no existe `tailwind.config`).
 
 ## Archivos
 - `prisma/schema.prisma` — modelo `Registro` (ver `tech-stack.md`).

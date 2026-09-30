@@ -8,10 +8,10 @@ Los nombres técnicos (`camelCase`) deben coincidir con `src/lib/schemas.ts`.
 | Tipo de registro | `tipo` | Sí | `trabajador` \| `visitante` | Puede venir del QR (`?tipo=visitante`); si no viene, la persona lo elige. |
 | Fecha | `fecha` | Automático | fecha | La pone el servidor, zona America/Bogota. No se pide al usuario. |
 | Nombre y apellidos | `nombre` | Sí | texto | Nombre completo, 3 a 100 caracteres. |
-| Cédula de ciudadanía | `documento` | Sí | texto | Solo dígitos, sin puntos ni espacios, 6 a 10 dígitos. |
-| Teléfono | `telefono` | Sí | texto | Solo dígitos, exactamente 10 (celular colombiano). |
+| Cédula de ciudadanía | `documento` | Sí | texto | Se normaliza: se quitan puntos y espacios, y se guardan solo dígitos. Debe tener entre 6 y 10 dígitos. |
+| Teléfono | `telefono` | Sí | texto | Se normaliza: se quitan espacios y guiones, y se guardan solo 10 dígitos. No se acepta el prefijo `+57`. |
 | Hora de ingreso | `horaIngreso` | Automático | hora | La pone el servidor al enviar, zona America/Bogota. |
-| Hora de salida estimada | `horaSalida` | No | hora (HH:MM, 24 h) | Se llena al llegar, así que es una estimación. Si se indica, debe ser posterior a la hora de ingreso. |
+| Hora de salida estimada | `horaSalida` | No | hora (HH:MM, 24 h) | Se llena al llegar, así que es una estimación. Se guarda como texto `HH:MM` (formato `^([01]\d|2[0-3]):[0-5]\d$`), no como fecha. Si se indica, el servidor verifica que sea posterior a la hora de ingreso. |
 | Autorización de datos | `consentimiento` | Sí | casilla | Debe estar marcada. Texto: "Acepto la política de tratamiento de datos personales" (Ley 1581 de 2012). |
 
 ## Solo trabajador
@@ -24,6 +24,7 @@ Los nombres técnicos (`camelCase`) deben coincidir con `src/lib/schemas.ts`.
 
 ## Decisiones tomadas
 - **Documento:** solo cédula de ciudadanía.
+- **Normalización:** `documento` y `telefono` se limpian dentro del esquema Zod (`src/lib/schemas.ts`), para que cliente y servidor apliquen la misma regla. Se quitan puntos, espacios y guiones, y se guarda solo el resultado en dígitos. El prefijo `+57` no se quita: si viene, el valor se rechaza.
 - **Hora de salida:** campo opcional (estimada), llenado por la persona al ingresar. No hay segundo escaneo por ahora.
 - **Fecha y hora de ingreso:** las genera el servidor, no la persona, para que el registro sea confiable.
 - **Política de datos:** la empresa ya la tiene; el formulario solo pide marcar la casilla de aceptación.

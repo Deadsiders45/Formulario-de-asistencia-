@@ -3,7 +3,7 @@ Formulario web al que se ingresa escaneando un QR, para registrar la asistencia 
 
 ## Stack
 - Lenguaje: TypeScript estricto
-- Framework / runtime: Next.js (App Router) + Tailwind CSS, Node LTS
+- Framework / runtime: Next.js (App Router) + Tailwind CSS v4, Node LTS
 - Base de datos: PostgreSQL (Supabase) con Prisma
 - Validación: Zod + react-hook-form
 - Correo: Resend (solo desde el servidor)
@@ -36,8 +36,8 @@ Flujo de un envío: `Formulario (cliente)` → `Server Action` → `src/lib/regi
 
 ## Estilo visual
 - Tailwind únicamente; no agregar librerías de UI sin avisar.
-- Colores, tipografía y espaciado como tokens en `tailwind.config` / `globals.css`; no escribir colores sueltos en los componentes.
-- Paleta: neutros + un color de acento (reemplazar por la paleta de la empresa cuando la entreguen). Una sola tipografía (con `next/font`).
+- Colores, tipografía y espaciado como tokens en el bloque `@theme` de `src/app/globals.css` (Tailwind v4; no existe `tailwind.config`); no escribir colores sueltos en los componentes.
+- Paleta y tipografía definidas en `docs/diseno.md` (verde de marca, negro y blanco; Inter con `next/font`).
 - Una columna, mobile-first. Etiquetas siempre visibles (no solo placeholder).
 - Botones e inputs con altura mínima de 44 px; un solo botón principal por pantalla.
 - Contraste mínimo WCAG AA; el foco del teclado debe verse.
@@ -90,3 +90,4 @@ Usar cada skill solo en su área. Si una skill contradice este archivo, gana est
 - No mostrar errores técnicos al usuario ni datos personales en logs.
 - Incluir aviso de tratamiento de datos personales con casilla de consentimiento (Ley 1581 de 2012).
 - Antes de cada PR, ejecutar `npm audit` y avisar si hay vulnerabilidades altas o críticas.
+- Excepción conocida: `npm audit` reporta `mysql2` y `deepmerge-ts` vía Prisma; no se usan en ejecución (la base es PostgreSQL). No ejecutar `npm audit fix --force` ni bajar Prisma. Revisar de nuevo antes de desplegar.

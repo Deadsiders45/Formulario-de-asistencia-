@@ -7,6 +7,9 @@ out/
 next-env.d.ts
 *.tsbuildinfo
 
+# Prisma: el cliente se genera desde prisma/schema.prisma
+src/generated/
+
 # variables de entorno: nunca subir, solo .env.example
 .env*
 !.env.example
