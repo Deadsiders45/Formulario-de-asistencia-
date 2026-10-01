@@ -10,8 +10,9 @@ Los nombres técnicos (`camelCase`) deben coincidir con `src/lib/schemas.ts`.
 | Nombre y apellidos | `nombre` | Sí | texto | Nombre completo, 3 a 100 caracteres. |
 | Cédula de ciudadanía | `documento` | Sí | texto | Se normaliza: se quitan puntos y espacios, y se guardan solo dígitos. Debe tener entre 6 y 10 dígitos. |
 | Teléfono | `telefono` | Sí | texto | Se normaliza: se quitan espacios y guiones, y se guardan solo 10 dígitos. No se acepta el prefijo `+57`. |
-| Hora de ingreso | `horaIngreso` | Automático | hora | La pone el servidor al enviar, zona America/Bogota. |
-| Hora de salida estimada | `horaSalida` | No | hora (HH:MM, 24 h) | Se llena al llegar, así que es una estimación. Se guarda como texto `HH:MM` (formato `^([01]\d|2[0-3]):[0-5]\d$`), no como fecha. Si se indica, el servidor verifica que sea **estrictamente posterior** a la hora de ingreso; si el turno termina después de medianoche, el campo debe quedar vacío. |
+| Hora de ingreso | `horaIngreso` | Sí | hora (HH:MM, 24 h) | La escribe la persona. |
+| Hora de salida estimada | `horaSalida` | No | hora (HH:MM, 24 h) | La escribe la persona. Si se indica, debe ser posterior a la hora de ingreso. |
+| Hora de diligenciamiento | `creadoEn` | Automático | fecha y hora | La pone el servidor al guardar. Se almacena en UTC y se muestra en America/Bogota. No se pide. |
 | Autorización de datos | `consentimiento` | Sí | casilla | Debe estar marcada. Texto: "Acepto la política de tratamiento de datos personales" (Ley 1581 de 2012). |
 
 ## Solo trabajador
