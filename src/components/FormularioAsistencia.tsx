@@ -33,6 +33,17 @@ const ORDEN_CAMPOS: CampoFormulario[] = [
   "consentimiento",
 ];
 
+/**
+ * `redirect()` lanza un error con `digest` que empieza por NEXT_REDIRECT.
+ * Un catch corriente se lo tragaría y la página nunca cambiaría.
+ */
+function esRedireccion(error: unknown): boolean {
+  if (typeof error !== "object" || error === null || !("digest" in error)) {
+    return false;
+  }
+  return String((error as { digest?: unknown }).digest ?? "").startsWith("NEXT_REDIRECT");
+}
+
 export function FormularioAsistencia({ tipoInicial }: Props) {
   const [enviando, startTransition] = useTransition();
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
@@ -83,16 +94,25 @@ export function FormularioAsistencia({ tipoInicial }: Props) {
       }
 
       startTransition(async () => {
-        // Sin try/catch: la Server Action termina con `redirect()`, que lanza
-        // NEXT_REDIRECT. Un catch aquí se tragaría la redirección.
-        const estado = await registrar(formData);
+        try {
+          const estado = await registrar(formData);
 
-        if (estado.errores) {
-          aplicarErrores(soloErroresDeCampos(estado.errores));
-          return;
+          if (estado.errores) {
+            aplicarErrores(soloErroresDeCampos(estado.errores));
+            return;
+          }
+
+          setErrorGeneral(estado.errorGeneral ?? null);
+        } catch (error) {
+          // La Server Action termina con `redirect()`, que lanza NEXT_REDIRECT.
+          // Ese error hay que relanzarlo o la redirección se pierde.
+          if (esRedireccion(error)) throw error;
+          // Caída de red: mensaje amable y el formulario conserva lo escrito,
+          // porque no se resetea nada.
+          setErrorGeneral(
+            "No pudimos enviar tus datos. Revisa tu conexión e inténtalo de nuevo.",
+          );
         }
-
-        setErrorGeneral(estado.errorGeneral ?? null);
       });
     },
     () => {

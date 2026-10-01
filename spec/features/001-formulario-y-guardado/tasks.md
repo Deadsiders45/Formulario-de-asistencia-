@@ -26,7 +26,7 @@
 - [x] Página de gracias con la hora del registro.
 
 ## Cierre
-- [ ] Test Playwright del flujo (visitante y trabajador) en viewport de celular.
-- [ ] Revisión de accesibilidad con Axe.
-- [ ] `npm run lint`, `npm test` y `npm run build` sin errores.
+- [x] Test Playwright del flujo (visitante y trabajador) en viewport de celular.
+- [x] Revisión de accesibilidad con Axe.
+- [x] `npm run lint`, `npm test` y `npm run build` sin errores.
 - [ ] Anotar la sesión en `docs/documentacion.md` y mover 001 a "Hecho" en `roadmap.md`.

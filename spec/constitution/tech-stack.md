@@ -38,6 +38,7 @@ Documentar todas en `.env.example`, sin valores reales.
 ## Requeridas por las herramientas
 Paquetes que instala el framework o las librerías y que el proyecto no elige libremente.
 - `@hookform/resolvers` (5.9.1) — conecta react-hook-form con Zod. Su `peerDependencies` admite `zod: ^3.25.0 || ^4.0.0`, compatible con la v4 que usa el proyecto.
+- `@axe-core/playwright` (4.13.0, dev) — revisión de accesibilidad con Axe en los tests de Playwright. Trae `axe-core` como dependencia, no hace falta instalarlo aparte.
 
 ## Requeridas por Prisma 7
 Prisma 7 ya no incluye los motores de Rust ni carga `.env` solo, así que necesita estos paquetes además de `prisma` y `@prisma/client`.

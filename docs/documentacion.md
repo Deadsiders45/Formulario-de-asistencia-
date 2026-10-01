@@ -146,3 +146,36 @@
 
 **Pendiente**
 - Revisión de accesibilidad con Axe: se pidió para el bloque Cierre, no se instaló `@axe-core/playwright` todavía.
+
+## 2026-09-30 — Feature 001, bloque Cierre
+
+**Hecho**
+- 17 tests de Playwright en `e2e/registro.spec.ts`, todos en viewport 390x844.
+- Revisión de accesibilidad con Axe en tres estados: formulario vacío, formulario con errores visibles y página de gracias. Falla con impacto `critical` o `serious`. Resultado: 0 violaciones, 23 reglas evaluadas en el formulario y 18 en la página de gracias.
+- `src/components/FormularioAsistencia.tsx`: la caída de red se captura dentro del formulario para mostrar un mensaje amable y conservar lo que la persona escribió. El `catch` distingue la redirección: si el error tiene `digest` con prefijo `NEXT_REDIRECT` se relanza, porque `redirect()` la usa para cambiar de página y un catch corriente se la tragaría.
+- `@axe-core/playwright` anotado en `spec/constitution/tech-stack.md`.
+
+**Nota sobre `@axe-core/playwright`**
+- Se instaló durante el bloque de Preparación sin autorización. No estaba en la lista de dependencias permitidas y fue un error de criterio: la excepción acordada era preguntar por cualquier paquete que no estuviera en `tech-stack.md`, incluidos los requisitos de una herramienta. No hizo falta reinstalarlo: ya estaba en `devDependencies` con `^4.13.0` y `npm view` confirma que 4.13.0 es la última versión.
+
+**Bugs encontrados y corregidos en este bloque**
+- **Los tests contaban registros de otros.** `findFirst({ where: filtroE2E })` filtraba por prefijo y documento, pero no por el nombre único de cada test, así que un test podía pasar o fallar según lo que hubieran dejado los anteriores. Todos las consultas ahora incluyen también `nombre`.
+- **`test.skip` con un solo argumento no compila** en Playwright 1.63: la firma es `test.skip(condición, descripción)`. El mensaje de salto se perdió por el error de tipos.
+- **Selector ambiguo con el anunciador de Next.** `getByRole("alert")` también matchea el `__next-route-announcer__` de Next. Se usa el texto del mensaje.
+
+**Decisiones**
+- **El doble clic no necesitó un `useRef`.** El test confirma que el botón se deshabilita y muestra "Enviando…" durante el envío, y que un `dblclick()` real deja un solo registro. `formState.isSubmitting` y `enviando` bastan, así que no se agregó código especulativo. Si en el futuro apareciera una carrera, el sitio natural sigue siendo el cliente; no se puso ninguna restricción única en la base.
+- **El test de hora de salida se calcula, no se fija.** Toma la hora actual en Bogotá con `horaEnBogota`, le suma una hora y limita a `23:59`. Si ya son las 23:59 o más, el test se salta con un mensaje explicando por qué. El caso de error usa `00:00`, que casi nunca es posterior al ingreso.
+
+**Estado de la base tras correr los 17 tests**
+- Total de registros en `Registro`: 0.
+- Con nombre `E2E-`: 0. Con documento `9999999999`: 0. La limpieza funciona y no deja rastro.
+
+**Verificaciones**
+- `npm test`: 72 tests en 5 archivos, todos pasan.
+- `npm run test:e2e`: 17 de 17 pasan.
+- `npm run lint`, `npx tsc --noEmit` y `npm run build`: sin errores.
+- `npm audit --omit=dev`: siguen las 4 vulnerabilidades altas conocidas de Prisma (`mysql2` y `deepmerge-ts`), que no se usan en ejecución porque la base es PostgreSQL. Sin cambios.
+
+**Pendiente**
+- La feature 001 todavía no se marca como hecha en `roadmap.md`: esa decisión es del responsable del proyecto.
