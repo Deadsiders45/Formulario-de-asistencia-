@@ -22,9 +22,10 @@ model Registro {
   id            String       @id @default(uuid()) @db.Uuid
   tipo          TipoRegistro
   fecha         DateTime     @db.Date
-  horaIngreso   DateTime     @db.Timestamptz(3)
+  /// Hora de ingreso escrita por la persona, en texto HH:MM. Obligatoria.
+  horaIngreso   String       @db.VarChar(5)
   /// Estimación escrita por la persona al llegar, en texto HH:MM.
-  /// Opcional: se valida en el servidor contra `horaIngreso`.
+  /// Opcional: debe ser posterior a `horaIngreso`.
   horaSalida    String?      @db.VarChar(5)
   nombre        String       @db.VarChar(100)
   /// Cédula de ciudadanía, solo dígitos (6 a 10).

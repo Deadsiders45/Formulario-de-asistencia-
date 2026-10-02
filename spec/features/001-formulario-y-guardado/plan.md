@@ -5,7 +5,7 @@ Un formulario de cliente (react-hook-form + Zod) que llama a una Server Action. 
 
 ## Decisiones
 - **Esquema Zod único** en `src/lib/schemas.ts`, con `tipo` como discriminador: `visitaA` es obligatorio solo para visitante.
-- **Fecha y hora** generadas en el servidor con zona America/Bogota; el cliente nunca las envía.
+- **Fecha** generada en el servidor con zona America/Bogota. La hora de ingreso y la de salida las escribe la persona en texto HH:MM.
 - **Anti-spam:** honeypot en esta feature. El límite de intentos por IP se decide en el plan de la feature 003, junto con el despliegue.
 - **Errores:** la Server Action devuelve errores por campo o un mensaje genérico; nunca detalles técnicos.
 - **Estilos:** tokens de `docs/diseno.md` definidos una vez en el bloque `@theme` de `src/app/globals.css` (Tailwind v4; no existe `tailwind.config`).
@@ -23,4 +23,5 @@ Un formulario de cliente (react-hook-form + Zod) que llama a una Server Action. 
 
 ## Riesgos
 - La validación del cliente y la del servidor pueden divergir; mitigar importando el mismo esquema en ambos.
-- La zona horaria puede dar horas incorrectas en el servidor; cubrir con un test unitario.
+- La `fecha` sigue generándose en el servidor y tiene que convertirse a America/Bogota; un error de conversión pondría el registro en el día equivocado. Cubrir con un test unitario.
+- Las horas las escribe la persona, así que no dependen del reloj del servidor. El riesgo pasa a que se escriba mal: lo cubren el esquema Zod y sus tests. `creadoEn`, que sí lo genera el servidor, sirve como referencia cruzada para detectar un ingreso improbable.

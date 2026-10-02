@@ -28,6 +28,7 @@ const ORDEN_CAMPOS: CampoFormulario[] = [
   "nombre",
   "documento",
   "telefono",
+  "horaIngreso",
   "horaSalida",
   "visitaA",
   "consentimiento",
@@ -55,6 +56,7 @@ export function FormularioAsistencia({ tipoInicial }: Props) {
       nombre: "",
       documento: "",
       telefono: "",
+      horaIngreso: "",
       horaSalida: "",
       consentimiento: false,
       campoTrampa: "",
@@ -207,6 +209,14 @@ export function FormularioAsistencia({ tipoInicial }: Props) {
             {...register("telefono")}
           />
         )}
+      </Campo>
+
+      <Campo
+        id="horaIngreso"
+        etiqueta="Hora de ingreso"
+        error={errores.horaIngreso}
+      >
+        {(props) => <input {...props} type="time" {...register("horaIngreso")} />}
       </Campo>
 
       <Campo

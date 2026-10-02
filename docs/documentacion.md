@@ -179,3 +179,31 @@
 
 **Pendiente**
 - La feature 001 todavía no se marca como hecha en `roadmap.md`: esa decisión es del responsable del proyecto.
+
+## 2026-10-02 — La hora de ingreso pasa de automática a manual
+
+**El cambio**
+- `horaIngreso` deja de generarla el servidor: ahora es obligatoria, en texto `HH:MM`, y la escribe la persona con un campo `type="time"`.
+- `horaSalida` no cambia: sigue opcional, manual, y con la regla estricta de ser posterior al ingreso.
+- `creadoEn` pasa a ser la hora de diligenciamiento: automática, la pone el servidor. No se toca.
+- `fecha` sigue generada por el servidor en America/Bogota.
+- La página de gracias no cambia: sigue mostrando la hora de diligenciamiento.
+
+**La migración `20261002130724_hora_ingreso_manual`**
+- Cambia `horaIngreso` de `TIMESTAMPTZ` a `VARCHAR(5)`.
+- Prisma no encuentra conversión entre `timestamptz` y texto, así que la migración hace `DROP COLUMN` + `ADD COLUMN`. Eso solo es posible si la tabla está vacía, y lo está: había un registro de una prueba manual, se borró por su id exacto y la tabla quedó en 0 filas antes y después de migrar.
+- El SQL se generó con `--create-only` y se revisó antes de aplicar.
+- `ENABLE ROW LEVEL SECURITY` y el `CHECK "Registro_consentimiento_true"` son propiedades de la tabla, no de la columna, así que sobreviven sin reaparecer en el SQL. Se verificaron después de aplicar consultando `pg_class` y `pg_constraint`: RLS activo y el CHECK presente.
+
+**La regla de horas vive ahora en `schemas.ts`**
+- Pasa a un `superRefine` sobre la unión discriminada, con el error en la ruta `["horaSalida"]`. Así el cliente muestra el error antes de enviar, y el servidor sigue validando con el mismo objeto.
+- Si `horaSalida` está vacía o ausente, `superRefine` no compara nada. Hay tests para los dos casos.
+- `horaEsPosterior` sigue en `hora.ts` y la importa el esquema, para no duplicar la comparación.
+- `registro.ts` ya no compara horas: recibe los datos validados y los guarda. El valor que devuelve para la página de gracias es `horaEnBogota(instante)`, es decir la hora de diligenciamiento.
+
+**Nota sobre Supabase y las horas**
+- Supabase guarda y muestra los `timestamptz` en **UTC**, cinco horas por delante de Bogotá. Por eso `creadoEn` se ve con una hora distinta a la que ve una persona en Colombia, y distinta también de la que muestra `/gracias`: la aplicación convierte a America/Bogota con `horaEnBogota`, el Table Editor de Supabase no. No es un error; es la diferencia entre el almacenamiento y la presentación.
+
+**Verificaciones**
+- `npm test`: 80 tests, todos pasan. `npm run test:e2e`: 18 de 18. Lint, `tsc` y build sin errores.
+- Tabla `Registro` en 0 filas al terminar, sin rastros de pruebas.

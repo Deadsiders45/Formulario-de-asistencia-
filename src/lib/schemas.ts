@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MENSAJE_HORA_SALIDA, horaEsPosterior } from "./hora";
 
 /**
  * Esquema de entrada del formulario. Única fuente de validación:
@@ -6,8 +7,8 @@ import { z } from "zod";
  *
  * Los nombres técnicos deben coincidir con `docs/campos.md`.
  *
- * No incluye `fecha`, `horaIngreso`, `estadoCorreo` ni `creadoEn`:
- * los genera el servidor en zona America/Bogota.
+ * No incluye `fecha`, `estadoCorreo` ni `creadoEn`: los genera el servidor en
+ * zona America/Bogota. `horaIngreso` sí la escribe la persona.
  */
 
 /** Quita espacios, guiones y puntos, dejando solo dígitos. */
@@ -33,6 +34,17 @@ const documentoSchema = z
       "Escribe solo los números de tu cédula, entre 6 y 10 dígitos, sin puntos",
   });
 
+/** Formato de hora `HH:MM` en 24 h. */
+const RE_HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+/** Hora de ingreso escrita por la persona. Obligatoria. */
+const horaIngresoSchema = z
+  .string()
+  .min(1, "Escribe la hora de ingreso")
+  .refine((valor) => RE_HORA.test(valor), {
+    message: "Escribe la hora como HH:MM, por ejemplo 08:00",
+  });
+
 /**
  * Hora estimada de salida, texto `HH:MM` en formato 24 h. Opcional.
  *
@@ -44,10 +56,9 @@ const horaSalidaSchema = z
   .string()
   .optional()
   .transform((valor) => (valor === undefined || valor.trim() === "" ? undefined : valor))
-  .refine(
-    (valor) => valor === undefined || /^([01]\d|2[0-3]):[0-5]\d$/.test(valor),
-    { message: "Escribe la hora como HH:MM, por ejemplo 17:30" },
-  );
+  .refine((valor) => valor === undefined || RE_HORA.test(valor), {
+    message: "Escribe la hora como HH:MM, por ejemplo 17:30",
+  });
 
 const nombreSchema = z
   .string()
@@ -80,6 +91,7 @@ const camposComunes = {
   nombre: nombreSchema,
   documento: documentoSchema,
   telefono: telefonoSchema,
+  horaIngreso: horaIngresoSchema,
   horaSalida: horaSalidaSchema,
   consentimiento: consentimientoSchema,
   /**
@@ -89,7 +101,7 @@ const camposComunes = {
   campoTrampa: z.string().optional(),
 };
 
-export const registroSchema = z.discriminatedUnion("tipo", [
+const union = z.discriminatedUnion("tipo", [
   z.object({
     tipo: z.literal("trabajador"),
     ...camposComunes,
@@ -100,6 +112,27 @@ export const registroSchema = z.discriminatedUnion("tipo", [
     ...camposComunes,
   }),
 ]);
+
+/**
+ * La comparación de horas vive aquí, y no en el servidor, para que el cliente
+ * muestre el error antes de enviar. `superRefine` cubre las dos ramas de la
+ * unión a la vez.
+ *
+ * Sin hora de salida no hay nada que comparar. La regla es estricta: la salida
+ * tiene que ser *posterior* al ingreso, no igual. Un turno que termina después
+ * de medianoche no se puede expresar, y la persona lo deja en blanco.
+ */
+export const registroSchema = union.superRefine((datos, ctx) => {
+  const { horaIngreso, horaSalida } = datos;
+  if (horaSalida === undefined) return;
+  if (!horaEsPosterior(horaIngreso, horaSalida)) {
+    ctx.addIssue({
+      code: "custom",
+      message: MENSAJE_HORA_SALIDA,
+      path: ["horaSalida"],
+    });
+  }
+});
 
 export type RegistroInput = z.input<typeof registroSchema>;
 export type RegistroDatos = z.output<typeof registroSchema>;
@@ -114,6 +147,7 @@ export const CAMPOS_FORMULARIO = [
   "nombre",
   "documento",
   "telefono",
+  "horaIngreso",
   "horaSalida",
   "visitaA",
   "consentimiento",

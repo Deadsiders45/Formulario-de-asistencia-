@@ -73,7 +73,7 @@ Flujo de un envío: `Formulario (cliente)` → `Server Action` → `src/lib/regi
 - `spec/README.md` — flujo completo de SDD.
 - `docs/campos.md` — campos de cada formulario (trabajador y visitante).
 - `docs/diseno.md` — colores, tipografía, logo y ejemplos de componentes.
-- `docs/documentacion.md` — al terminar cada tarea, agregar una entrada corta con notas de la sesión y tareas realizadas. Leer solo las últimas 5 entradas.
+- `docs/documentacion.md` — al terminar cada tarea, agregar una entrada corta con notas de la sesión y tareas realizadas. Leer solo las 5 entradas más recientes.
 - La constitución manda: si una feature choca con `mission.md` o `tech-stack.md`, se replantea la feature, no la constitución.
 
 ## Skills

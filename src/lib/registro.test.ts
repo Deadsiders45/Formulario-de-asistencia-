@@ -21,6 +21,7 @@ function datosValidos(extra: Record<string, unknown> = {}) {
     nombre: "Ana María López",
     documento: "1234567890",
     telefono: "3001234567",
+    horaIngreso: "08:00",
     horaSalida: "",
     consentimiento: true,
     campoTrampa: "",
@@ -43,18 +44,15 @@ beforeEach(() => {
 
 describe("guardarRegistro", () => {
   it("guarda la fecha como Date ISO, no como texto", async () => {
-    // La columna `fecha` es DATE, pero Prisma rechaza un string "AAAA-MM-DD".
     await guardarRegistro(datosValidos(), instanteDeHora("08:21"));
     const fecha = create.mock.calls[0]![0].data.fecha as Date;
     expect(fecha).toBeInstanceOf(Date);
     expect(fecha.toISOString()).toBe("2026-09-30T00:00:00.000Z");
   });
 
-  it("guarda con la hora y la fecha de Bogotá", async () => {
-    const resultado = await guardarRegistro(
-      datosValidos(),
-      instanteDeHora("08:21"),
-    );
+  it("devuelve la hora de diligenciamiento, no la hora de ingreso", async () => {
+    // La persona escribió 08:00, pero se diligenció a las 08:21.
+    const resultado = await guardarRegistro(datosValidos(), instanteDeHora("08:21"));
 
     expect(resultado.ok).toBe(true);
     if (resultado.ok) {
@@ -62,6 +60,15 @@ describe("guardarRegistro", () => {
       expect(resultado.fecha).toBe("2026-09-30");
     }
     expect(create).toHaveBeenCalledTimes(1);
+  });
+
+  it("guarda la hora de ingreso tal como la escribió la persona", async () => {
+    await guardarRegistro(
+      datosValidos({ horaIngreso: "07:45" }),
+      instanteDeHora("08:21"),
+    );
+    // Texto plano, no una fecha: la persona escribe HH:MM.
+    expect(create.mock.calls[0]![0].data.horaIngreso).toBe("07:45");
   });
 
   it("convierte el tipo con el enum de Prisma", async () => {
@@ -96,46 +103,6 @@ describe("guardarRegistro", () => {
   it("no manda estadoCorreo: lo pone el default del modelo", async () => {
     await guardarRegistro(datosValidos(), instanteDeHora("08:00"));
     expect(create.mock.calls[0]![0].data).not.toHaveProperty("estadoCorreo");
-  });
-
-  it("acepta una hora de salida posterior", async () => {
-    const resultado = await guardarRegistro(
-      datosValidos({ horaSalida: "17:30" }),
-      instanteDeHora("08:00"),
-    );
-    expect(resultado.ok).toBe(true);
-    expect(create).toHaveBeenCalledTimes(1);
-  });
-
-  it("rechaza una hora de salida igual o anterior", async () => {
-    for (const horaSalida of ["08:00", "07:59"]) {
-      const resultado = await guardarRegistro(
-        datosValidos({ horaSalida }),
-        instanteDeHora("08:00"),
-      );
-      expect(resultado.ok).toBe(false);
-      if (!resultado.ok && "errores" in resultado) {
-        expect(resultado.errores.horaSalida).toContain("déjala en blanco");
-      }
-    }
-    expect(create).not.toHaveBeenCalled();
-  });
-
-  it("rechaza el turno que termina después de medianoche", async () => {
-    const resultado = await guardarRegistro(
-      datosValidos({ horaSalida: "00:30" }),
-      instanteDeHora("23:50"),
-    );
-    expect(resultado.ok).toBe(false);
-    expect(create).not.toHaveBeenCalled();
-  });
-
-  it("acepta minutos siguientes cerca de medianoche", async () => {
-    const resultado = await guardarRegistro(
-      datosValidos({ horaSalida: "23:59" }),
-      instanteDeHora("23:50"),
-    );
-    expect(resultado.ok).toBe(true);
   });
 
   it("traduce un fallo de Prisma sin filtrar detalles", async () => {

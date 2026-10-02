@@ -1,7 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { prisma } from "@/lib/db";
-import { horaEnBogota } from "@/lib/hora";
 
 /**
  * Datos reservados para los tests: el prefijo en `nombre` y el documento
@@ -10,6 +9,11 @@ import { horaEnBogota } from "@/lib/hora";
  */
 const DOCUMENTO_E2E = "9999999999";
 const PREFIJO = "E2E-";
+
+/** Horas fijas: las escribe la persona, así que no dependen del reloj. */
+const HORA_INGRESO = "08:00";
+const HORA_SALIDA = "17:30";
+const HORA_SALIDA_INVALIDA = "07:00";
 
 const marca = () => `${PREFIJO}${Date.now()}`;
 
@@ -26,6 +30,7 @@ async function llenarComunes(page: Page, nombre: string) {
   await page.getByLabel("Nombre y apellidos").fill(nombre);
   await page.getByLabel("Cédula de ciudadanía").fill(DOCUMENTO_E2E);
   await page.getByLabel("Teléfono (celular)").fill("300 123 4567");
+  await page.getByLabel("Hora de ingreso").fill(HORA_INGRESO);
 }
 
 function enviar(page: Page) {
@@ -93,25 +98,13 @@ test.describe("registro de asistencia", () => {
     expect(guardado?.horaSalida).toBeNull();
   });
 
-  test("guarda la hora de salida cuando se informa", async ({ page }) => {
-    // Una hora fija no serviría: la regla exige que sea posterior al ingreso.
-    const ahora = horaEnBogota(new Date());
-    const [h, m] = ahora.split(":").map(Number);
-    const minutos = (h ?? 0) * 60 + (m ?? 0) + 60;
-    if (minutos >= 24 * 60 - 1) {
-      test.skip(
-        true,
-        `Son las ${ahora} en Bogotá: no cabe una hora de salida posterior antes de medianoche.`,
-      );
-    }
-    const salida = `${String(Math.floor(minutos / 60)).padStart(2, "0")}:${String(
-      minutos % 60,
-    ).padStart(2, "0")}`;
-
+  test("guarda las horas de ingreso y salida tal como las escribió la persona", async ({
+    page,
+  }) => {
     const nombre = marca();
     await page.goto("/?tipo=trabajador");
     await llenarComunes(page, nombre);
-    await page.getByLabel("Hora de salida estimada (opcional)").fill(salida);
+    await page.getByLabel("Hora de salida estimada (opcional)").fill(HORA_SALIDA);
     await page.getByLabel(/Acepto la política/).check();
     await enviar(page);
 
@@ -119,20 +112,42 @@ test.describe("registro de asistencia", () => {
     const guardado = await prisma.registro.findFirst({
       where: { ...filtroE2E, nombre },
     });
-    expect(guardado?.horaSalida).toBe(salida);
+    expect(guardado?.horaIngreso).toBe(HORA_INGRESO);
+    expect(guardado?.horaSalida).toBe(HORA_SALIDA);
   });
 
   test("rechaza una hora de salida que no es posterior al ingreso", async ({ page }) => {
     const nombre = marca();
     await page.goto("/?tipo=trabajador");
     await llenarComunes(page, nombre);
-    // 00:00 solo es posterior si el ingreso fue antes; casi nunca lo es.
-    await page.getByLabel("Hora de salida estimada (opcional)").fill("00:00");
+    await page
+      .getByLabel("Hora de salida estimada (opcional)")
+      .fill(HORA_SALIDA_INVALIDA);
     await page.getByLabel(/Acepto la política/).check();
     await enviar(page);
 
     await expect(page.locator("#horaSalida-error")).toContainText(
       "debe ser posterior a la de ingreso",
+    );
+    await expect(page).toHaveURL(/\/\?/);
+
+    const guardado = await prisma.registro.findFirst({
+      where: { ...filtroE2E, nombre },
+    });
+    expect(guardado).toBeNull();
+  });
+
+  test("exige la hora de ingreso", async ({ page }) => {
+    const nombre = marca();
+    await page.goto("/?tipo=trabajador");
+    await page.getByLabel("Nombre y apellidos").fill(nombre);
+    await page.getByLabel("Cédula de ciudadanía").fill(DOCUMENTO_E2E);
+    await page.getByLabel("Teléfono (celular)").fill("300 123 4567");
+    await page.getByLabel(/Acepto la política/).check();
+    await enviar(page);
+
+    await expect(page.locator("#horaIngreso-error")).toContainText(
+      "Escribe la hora de ingreso",
     );
     await expect(page).toHaveURL(/\/\?/);
 
@@ -189,12 +204,17 @@ test.describe("registro de asistencia", () => {
     expect(guardados[0]?.nombre).toBe(nombre);
   });
 
-  test("no muestra campos de fecha ni de hora de ingreso", async ({ page }) => {
+  test("no muestra el campo de fecha y sí el de hora de ingreso", async ({ page }) => {
     await page.goto("/?tipo=trabajador");
     await expect(page.getByText("Registro de trabajador")).toBeVisible();
-    // El único campo de hora es la salida estimada.
-    await expect(page.getByLabel("Hora de salida estimada (opcional)")).toHaveCount(1);
-    await expect(page.getByText(/Fecha de ingreso/i)).toHaveCount(0);
+
+    // La hora de ingreso la escribe la persona: tiene que estar visible.
+    await expect(page.getByLabel("Hora de ingreso")).toBeVisible();
+    await expect(page.getByLabel("Hora de salida estimada (opcional)")).toBeVisible();
+
+    // La fecha la pone el servidor: no se pide.
+    await expect(page.getByText(/^Fecha/)).toHaveCount(0);
+    await expect(page.locator('input[type="date"]')).toHaveCount(0);
   });
 
   test("sin marcar la casilla de autorización no se guarda nada", async ({ page }) => {

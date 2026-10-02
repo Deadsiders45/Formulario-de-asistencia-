@@ -7,6 +7,7 @@ const trabajadorValido = {
   nombre: "Ana María López",
   documento: "1234567890",
   telefono: "3001234567",
+  horaIngreso: "08:00",
   horaSalida: "",
   consentimiento: true,
   campoTrampa: "",
@@ -65,19 +66,17 @@ describe("esquema del formulario", () => {
     expect(registroSchema.safeParse(sinTipo).success).toBe(false);
   });
 
-  it("no acepta fecha, horaIngreso, estadoCorreo ni creadoEn", () => {
+  it("no acepta fecha, estadoCorreo ni creadoEn", () => {
     // Si alguno existiera en el esquema, Zod los dejaría pasar.
     const resultado = registroSchema.safeParse({
       ...trabajadorValido,
       fecha: "2026-09-29",
-      horaIngreso: "2026-09-29T08:00:00",
       estadoCorreo: "ENVIADO",
       creadoEn: "2026-09-29T08:00:00",
     });
     expect(resultado.success).toBe(true);
     if (resultado.success) {
       expect(resultado.data).not.toHaveProperty("fecha");
-      expect(resultado.data).not.toHaveProperty("horaIngreso");
       expect(resultado.data).not.toHaveProperty("estadoCorreo");
       expect(resultado.data).not.toHaveProperty("creadoEn");
     }
@@ -217,6 +216,49 @@ describe("nombre", () => {
   });
 });
 
+describe("horaIngreso", () => {
+  it("es obligatoria y se acepta como HH:MM", () => {
+    const resultado = registroSchema.safeParse(trabajadorValido);
+    expect(resultado.success).toBe(true);
+    if (resultado.success) {
+      expect(resultado.data.horaIngreso).toBe("08:00");
+    }
+  });
+
+  it("rechaza el texto vacío", () => {
+    const resultado = registroSchema.safeParse({ ...trabajadorValido, horaIngreso: "" });
+    expect(resultado.success).toBe(false);
+    expect(
+      resultado.error?.issues.find((i) => i.path[0] === "horaIngreso")?.message,
+    ).toBe("Escribe la hora de ingreso");
+  });
+
+  it("rechaza que esté ausente", () => {
+    const sinHora: Record<string, unknown> = { ...trabajadorValido };
+    delete sinHora.horaIngreso;
+    expect(registroSchema.safeParse(sinHora).success).toBe(false);
+  });
+
+  it("rechaza formatos que no son HH:MM", () => {
+    for (const horaIngreso of ["8:00", "24:00", "12:60", "08:00:00", "mañana"]) {
+      expect(
+        registroSchema.safeParse({ ...trabajadorValido, horaIngreso }).success,
+      ).toBe(false);
+    }
+  });
+
+  it("acepta las horas cercanas a medianoche", () => {
+    for (const horaIngreso of ["00:00", "23:59"]) {
+      const resultado = registroSchema.safeParse({
+        ...trabajadorValido,
+        horaIngreso,
+        horaSalida: "",
+      });
+      expect(resultado.success).toBe(true);
+    }
+  });
+});
+
 describe("horaSalida", () => {
   it("trata el string vacío como ausente", () => {
     const resultado = registroSchema.safeParse({
@@ -229,10 +271,81 @@ describe("horaSalida", () => {
     }
   });
 
-  it("acepta las horas cercanas a medianoche", () => {
-    for (const horaSalida of ["00:00", "23:59", "09:05", "12:00"]) {
+  it("no compara horas si la salida está vacía", () => {
+    // El ingreso es de la tarde; la salida vacía no debe compararse con él.
+    const resultado = registroSchema.safeParse({
+      ...trabajadorValido,
+      horaIngreso: "22:00",
+      horaSalida: "",
+    });
+    expect(resultado.success).toBe(true);
+  });
+
+  it("no compara horas si la salida está ausente", () => {
+    const sinSalida: Record<string, unknown> = {
+      ...trabajadorValido,
+      horaIngreso: "22:00",
+    };
+    delete sinSalida.horaSalida;
+    expect(registroSchema.safeParse(sinSalida).success).toBe(true);
+  });
+
+  it("acepta una salida posterior al ingreso", () => {
+    const resultado = registroSchema.safeParse({
+      ...trabajadorValido,
+      horaIngreso: "08:00",
+      horaSalida: "17:30",
+    });
+    expect(resultado.success).toBe(true);
+  });
+
+  it("rechaza una salida igual o anterior al ingreso", () => {
+    for (const [horaIngreso, horaSalida] of [
+      ["08:00", "08:00"],
+      ["08:00", "07:59"],
+    ]) {
       const resultado = registroSchema.safeParse({
         ...trabajadorValido,
+        horaIngreso,
+        horaSalida,
+      });
+      expect(resultado.success).toBe(false);
+      expect(
+        resultado.error?.issues.find((i) => i.path[0] === "horaSalida")?.message,
+      ).toContain("debe ser posterior a la de ingreso");
+    }
+  });
+
+  it("rechaza el turno que termina después de medianoche", () => {
+    const resultado = registroSchema.safeParse({
+      ...trabajadorValido,
+      horaIngreso: "23:50",
+      horaSalida: "00:30",
+    });
+    expect(resultado.success).toBe(false);
+    expect(
+      resultado.error?.issues.find((i) => i.path[0] === "horaSalida")?.message,
+    ).toContain("déjala en blanco");
+  });
+
+  it("acepta minutos siguientes cerca de medianoche", () => {
+    const resultado = registroSchema.safeParse({
+      ...trabajadorValido,
+      horaIngreso: "23:50",
+      horaSalida: "23:59",
+    });
+    expect(resultado.success).toBe(true);
+  });
+
+  it("acepta las horas válidas", () => {
+    for (const [horaIngreso, horaSalida] of [
+      ["08:00", "09:05"],
+      ["08:00", "12:00"],
+      ["00:00", "23:59"],
+    ]) {
+      const resultado = registroSchema.safeParse({
+        ...trabajadorValido,
+        horaIngreso,
         horaSalida,
       });
       expect(resultado.success).toBe(true);

@@ -1,11 +1,5 @@
 import { prisma } from "./db";
-import {
-  MENSAJE_HORA_SALIDA,
-  fechaComoDate,
-  fechaEnBogota,
-  horaEnBogota,
-  horaEsPosterior,
-} from "./hora";
+import { fechaComoDate, fechaEnBogota, horaEnBogota } from "./hora";
 import type { RegistroDatos } from "./schemas";
 import { aTipoPrisma } from "./tipoRegistro";
 
@@ -28,26 +22,19 @@ function codigoDeError(error: unknown): string {
 
 /**
  * Guarda el registro. El reloj es inyectable para que los tests no dependan
- * de la hora real.
+ * de la hora real: `instante` es la hora de diligenciamiento.
  */
 export async function guardarRegistro(
+  // Recibe datos ya validados por registroSchema (incluye la regla de horas)
   datos: RegistroDatos,
   instante: Date = new Date(),
 ): Promise<ResultadoRegistro> {
-  const horaIngreso = horaEnBogota(instante);
-
-  if (datos.horaSalida !== undefined) {
-    if (!horaEsPosterior(horaIngreso, datos.horaSalida)) {
-      return { ok: false, errores: { horaSalida: MENSAJE_HORA_SALIDA } };
-    }
-  }
-
   try {
     await prisma.registro.create({
       data: {
         tipo: aTipoPrisma(datos.tipo),
         fecha: fechaComoDate(instante),
-        horaIngreso: instante,
+        horaIngreso: datos.horaIngreso,
         horaSalida: datos.horaSalida ?? null,
         nombre: datos.nombre,
         documento: datos.documento,
@@ -63,5 +50,6 @@ export async function guardarRegistro(
 
   // Feature 002: enviar correo aquí.
 
-  return { ok: true, hora: horaIngreso, fecha: fechaEnBogota(instante) };
+  // `hora` es la hora de diligenciamiento, que es lo que muestra /gracias.
+  return { ok: true, hora: horaEnBogota(instante), fecha: fechaEnBogota(instante) };
 }

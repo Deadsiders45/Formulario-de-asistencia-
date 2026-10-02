@@ -16,8 +16,8 @@
 ## Servidor
 - [x] `db.ts` y `registro.ts`.
 - [x] Server Action con validación, honeypot y manejo de errores.
-- [x] Generar fecha y hora de ingreso en America/Bogota, con test.
-- [x] Validar horaSalida posterior a horaIngreso (America/Bogota) con test de horas cercanas a medianoche.
+- [x] Generar la fecha en America/Bogota, con test.
+- [x] Validar horaSalida posterior a horaIngreso, en el esquema Zod, con test de horas cercanas a medianoche.
 
 ## Interfaz
 - [x] Componentes base: campo, botón, casilla.

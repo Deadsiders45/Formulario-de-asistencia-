@@ -19,13 +19,13 @@ Tabla `Registro`. Los campos del formulario, sus formatos y reglas están en `do
 | `id` | UUID | Clave primaria. |
 | `tipo` | enum `TRABAJADOR` \| `VISITANTE` | |
 | `fecha` | fecha | La genera el servidor, zona America/Bogota. |
-| `horaIngreso` | fecha y hora | La genera el servidor. |
+| `horaIngreso` | texto `HH:MM`, obligatoria | La escribe la persona. |
 | `horaSalida` | texto `HH:MM`, opcional | Estimada por la persona. |
 | `nombre`, `documento`, `telefono` | texto | Ver `docs/campos.md`. |
 | `visitaA` | texto, opcional | Obligatorio solo si `tipo` es `VISITANTE`. |
 | `consentimiento` | booleano | Siempre `true`; si no, no se guarda. |
 | `estadoCorreo` | enum `PENDIENTE` \| `ENVIADO` \| `FALLIDO` | Empieza en `PENDIENTE`. |
-| `creadoEn` | fecha y hora | Automático. |
+| `creadoEn` | fecha y hora | Hora de diligenciamiento. Automática, la pone el servidor. Se almacena en UTC y se muestra en America/Bogota. |
 
 ## Variables de entorno
 Documentar todas en `.env.example`, sin valores reales.

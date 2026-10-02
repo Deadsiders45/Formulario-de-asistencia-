@@ -21,6 +21,7 @@ const camposValidos = {
   nombre: "Ana María López",
   documento: "1.234.567.890",
   telefono: "300 123 4567",
+  horaIngreso: "08:00",
   horaSalida: "",
   consentimiento: "true",
   campoTrampa: "",

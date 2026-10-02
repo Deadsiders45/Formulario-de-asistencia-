@@ -27,7 +27,7 @@ Los nombres técnicos (`camelCase`) deben coincidir con `src/lib/schemas.ts`.
 - **Documento:** solo cédula de ciudadanía.
 - **Normalización:** `documento` y `telefono` se limpian dentro del esquema Zod (`src/lib/schemas.ts`), para que cliente y servidor apliquen la misma regla. Se quitan puntos, espacios y guiones, y se guarda solo el resultado en dígitos. El prefijo `+57` no se quita: si viene, el valor se rechaza.
 - **Hora de salida:** campo opcional (estimada), llenado por la persona al ingresar. No hay segundo escaneo por ahora.
-- **Fecha y hora de ingreso:** las genera el servidor, no la persona, para que el registro sea confiable.
+- **Fechas y horas:** la fecha la genera el servidor en America/Bogota. Las horas de ingreso y de salida las escribe la persona. La hora de diligenciamiento (`creadoEn`) la pone el servidor.
 - **Política de datos:** la empresa ya la tiene; el formulario solo pide marcar la casilla de aceptación.
 - **Destinatario del correo:** se configura con la variable de entorno `DESTINATARIO_ASISTENCIA`, no en el código. Para el desarrollo se usa una cuenta de pruebas y luego se cambia por la real.
 
