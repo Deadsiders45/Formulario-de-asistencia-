@@ -31,7 +31,7 @@ Flujo de un envío: `Formulario (cliente)` → `Server Action` → `src/lib/regi
 - Server Actions / Route Handlers solo reciben, validan con Zod y llaman a `src/lib/`.
 - `src/lib/registro.ts` orquesta: guarda en BD primero y envía el correo después.
 - BD y correo van en módulos separados (`db.ts`, `email.ts`) para poder cambiar de proveedor sin tocar el resto.
-- Si el correo falla, el registro ya quedó guardado: registrar el error y marcar el envío como pendiente.
+- Si el correo falla, el registro ya quedó guardado: registrar el error y marcar `estadoCorreo` como `FALLIDO`. Los reintentos no están en el alcance actual.
 - Sin capas extra (repositorios, casos de uso, etc.) hasta que el proyecto lo justifique.
 
 ## Estilo visual
