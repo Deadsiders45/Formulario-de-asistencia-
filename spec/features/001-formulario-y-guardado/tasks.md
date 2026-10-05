@@ -29,4 +29,4 @@
 - [x] Test Playwright del flujo (visitante y trabajador) en viewport de celular.
 - [x] Revisión de accesibilidad con Axe.
 - [x] `npm run lint`, `npm test` y `npm run build` sin errores.
-- [ ] Anotar la sesión en `docs/documentacion.md` y mover 001 a "Hecho" en `roadmap.md`.
+- [x] Anotar la sesión en `docs/documentacion.md` y mover 001 a "Hecho" en `roadmap.md`.

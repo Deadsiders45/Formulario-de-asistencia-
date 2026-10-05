@@ -207,3 +207,24 @@
 **Verificaciones**
 - `npm test`: 80 tests, todos pasan. `npm run test:e2e`: 18 de 18. Lint, `tsc` y build sin errores.
 - Tabla `Registro` en 0 filas al terminar, sin rastros de pruebas.
+
+## 2026-10-05 — Feature 001 cerrada
+
+**Estado**
+- Los 12 criterios de aceptación de `spec.md` tienen cobertura: 80 tests unitarios (Vitest) y 18 de Playwright en viewport 390x844, incluidos los 3 de accesibilidad con Axe, que reportan 0 violaciones `critical` y `serious`.
+- Verificación de cierre, ejecutada de nuevo: `npm test` 80/80, `npm run test:e2e` 18/18, lint, `tsc` y build sin errores.
+- `001-formulario-y-guardado` pasa a "Hecho" en `roadmap.md`. `002-envio-correo` queda como Siguiente.
+
+**Lo que ya funciona**
+- Formulario de una pantalla, con tipo fijo si viene del QR (`?tipo=`) o selector si no.
+- Validación compartida en cliente y servidor: normaliza teléfono y cédula, exige hora de ingreso, compara la hora de salida con la de ingreso y avisa antes de enviar.
+- Guarda en PostgreSQL con `estadoCorreo = PENDIENTE` y redirige a la página de gracias con la hora de diligenciamiento.
+
+**Pendientes que hereda la feature 002**
+- **Los tests e2e necesitan un modo de pruebas que no envíe correos reales.** Hoy `DESTINATARIO_ASISTENCIA` apunta a una cuenta de pruebas y Resend está sin dominio verificado, así que el correo todavía no sale; al añadirlo, hay que decidir cómo evitar que una corrida de e2e dispare correos de verdad.
+- **Verificar el dominio de Resend** antes de que el correo llegue a la encargada real: sin eso solo se puede enviar a la dirección con la que se creó la cuenta.
+- **Límite de intentos por IP** para el anti-spam, diferido a la feature 003 junto con el despliegue. Hoy solo hay honeypot.
+- `estadoCorreo` ya tiene sus tres estados en el modelo, pero nadie los escribe todavía.
+
+**Fuera de alcance, sigue así**
+- Sin panel, sin reportes, sin segundo escaneo para la salida real, sin login.
