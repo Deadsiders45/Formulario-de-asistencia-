@@ -34,6 +34,7 @@ Documentar todas en `.env.example`, sin valores reales.
 - `RESEND_API_KEY` — clave de Resend con permiso de solo envío, solo en el servidor.
 - `MAIL_FROM` — remitente del correo (pruebas: `onboarding@resend.dev`; producción: una dirección de un dominio verificado).
 - `DESTINATARIO_ASISTENCIA` — correo que recibe los registros (cambia de pruebas a real sin tocar el código).
+- `MAIL_MODE` — `live` o `test`. Solo `live` envía correos reales; cualquier otro valor, o no definirlo, se comporta como `test` y no envía nada. En producción hay que fijar `MAIL_MODE=live`; el despliegue lo define la feature 003. Los tests de Playwright la fijan en `test` y ese valor gana sobre el del `.env`.
 
 ## Requeridas por las herramientas
 Paquetes que instala el framework o las librerías y que el proyecto no elige libremente.

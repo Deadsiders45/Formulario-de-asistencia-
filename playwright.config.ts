@@ -35,5 +35,9 @@ export default defineConfig({
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
+    // Los tests e2e no deben enviar correos reales ni a la encargada ni a nadie.
+    // El objeto `env` del proceso hijo sobrescribe el entorno, así que este
+    // valor gana sobre el que pueda tener el `.env`.
+    env: { ...process.env, MAIL_MODE: "test" },
   },
 });

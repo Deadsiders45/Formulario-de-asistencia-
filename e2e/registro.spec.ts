@@ -72,6 +72,24 @@ test.describe("registro de asistencia", () => {
     expect(guardado?.visitaA).toBe("Carlos Pérez");
   });
 
+  test("los e2e no envían correos reales", async ({ page }) => {
+    // Este test es la prueba de que `MAIL_MODE=test` en `playwright.config.ts`
+    // gana sobre lo que tenga el `.env`. Si el servidor de los e2e corriera en
+    // modo live, el registro saldría con `estadoCorreo` distinto de PENDIENTE.
+    const nombre = marca();
+    await page.goto("/?tipo=trabajador");
+    await llenarComunes(page, nombre);
+    await page.getByLabel(/Acepto la política/).check();
+    await enviar(page);
+
+    await page.waitForURL(/\/gracias/);
+    const guardado = await prisma.registro.findFirst({
+      where: { ...filtroE2E, nombre },
+    });
+    expect(guardado, "el registro debe quedar guardado").not.toBeNull();
+    expect(guardado?.estadoCorreo, "no debe haber enviado correo").toBe("PENDIENTE");
+  });
+
   test("un trabajador se guarda sin visitaA y con el teléfono normalizado", async ({ page }) => {
     const nombre = marca();
     await page.goto("/?tipo=trabajador");
